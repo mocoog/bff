@@ -1,0 +1,24 @@
+swagger: "2.0"
+info:
+  version: 1.0.0
+  title: mocoog bff server
+  description: API Document of Backend for Frontend Server
+schemes:
+  - http
+  # - https
+host: localhost:8080
+basePath: /v1/
+tags:
+  - name: Basis
+    description: Endpoints that are the backbone of the service
+paths:
+  /health:
+    get:
+      summary: Health Check
+      tags:
+        - Basis
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
