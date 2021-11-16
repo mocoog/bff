@@ -30,6 +30,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Get dependencies
+        working-directory: ./bff
         run: go get -v -t -d ./...
       - name: Test code
+        working-directory: ./bff
         run: go test -v ./...
