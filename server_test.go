@@ -6,47 +6,45 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-openapi/runtime/middleware"
-	"github.com/mocoog/bff/interface/gen/restapiv1"
-	"github.com/mocoog/bff/interface/gen/restapiv1/operations/basis"
+	"github.com/mocoog/bff/interface/provider"
 )
 
 func TestHealthCheck(t *testing.T) {
 	t.Helper()
 	cases := []struct {
-		Name string
-		Path string
+		Name       string
+		Path       string
+		StatusCode int
 	}{
 		{
-			Name: "(Success)Health Check",
-			Path: "/health",
+			Name:       "(Success)Health Check",
+			Path:       "/v1/health",
+			StatusCode: 200,
+		},
+		{
+			Name:       "(Success)Not Found",
+			Path:       "/v1/aaaas",
+			StatusCode: 404,
 		},
 	}
-	api, err := initializeAPI()
-	if err != nil {
-		t.Errorf("Failed Health Check! 1: %v", err.Error())
-	}
-	server := restapiv1.NewServer(api)
+	server, _ := provider.InitializeAPIServer()
 	defer server.Shutdown()
 
 	flag.Parse()
 	server.Port = *portFlag
-	api.BasisGetHealthHandler = basis.GetHealthHandlerFunc(
-		func(params basis.GetHealthParams) middleware.Responder {
-			return basis.NewGetHealthOK()
-		})
 	server.ConfigureAPI()
+
+	ts := httptest.NewServer(server.GetHandler())
+	defer ts.Close()
 
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
-			ts := httptest.NewServer(server.GetHandler())
-			defer ts.Close()
-			res, err := http.Get(ts.URL + "/v1/health")
+			res, err := http.Get(ts.URL + c.Path)
 			if err != nil {
-				t.Errorf("Failed Health Check! 2: %v", err.Error())
+				t.Errorf("Failed %s: %v", c.Path, err.Error())
 			}
-			if res.StatusCode != 200 {
-				t.Errorf("Failed Health Check! 2: %v", "Invalid Status Code")
+			if res.StatusCode != c.StatusCode {
+				t.Errorf("Failed %s: Invalid Status Code", c.Path)
 			}
 		})
 	}
